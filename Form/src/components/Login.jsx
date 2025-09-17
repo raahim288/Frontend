@@ -40,12 +40,14 @@ export const Login = () => {
     }
 
     try {
-  const response = await fetch(`${API_URL}/verify-otp`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, otp }),
-});
-
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for CORS and cookies
+        body: JSON.stringify({ email, password }),
+      });
 
       const result = await response.json();
 
