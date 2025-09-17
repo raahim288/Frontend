@@ -40,14 +40,12 @@ export const Login = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important for CORS and cookies
-        body: JSON.stringify({ email, password }),
-      });
+  const response = await fetch(`${API_URL}/verify-otp`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, otp }),
+});
+
 
       const result = await response.json();
 
@@ -84,7 +82,7 @@ export const Login = () => {
 
       if (response.ok) {
         toast.success(result.message || 'OTP verified successfully!', { position: 'top-right', autoClose: 3000 });
-        setTimeout(() => navigate('/navbar'), 1500);
+        setTimeout(() => navigate('/LandingDashboard'), 1500);
       } else {
         toast.error(result.message || 'Invalid OTP', { position: 'top-right', autoClose: 3000 });
       }
