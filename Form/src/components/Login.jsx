@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
-import { Box, Button, FormControl, Typography, TextField, InputAdornment, IconButton } from '@mui/material';
-import { motion } from 'framer-motion'; // Import motion from framer-motion
+import {
+  Box,
+  Button,
+  FormControl,
+  Typography,
+  TextField,
+  InputAdornment,
+  IconButton,
+} from '@mui/material';
+import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
@@ -17,32 +25,37 @@ export const Login = () => {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ Use environment variable for backend URL
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-  const handleShowPassword=()=>{
-    setShowPassword(!showPassword);
-  }
-  // Handle form submission
+  const handleShowPassword = () => setShowPassword(!showPassword);
+
+  // **Handle Login Submission**
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
+    e.preventDefault();
 
-    const data = { email, password };
+    if (!email || !password) {
+      toast.error('Email and password are required!', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:3000/login', {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        credentials: 'include', // Important for CORS and cookies
+        body: JSON.stringify({ email, password }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        setIsOtpSent(true); // Show OTP input field
-        toast.success(result.message, { position: 'top-right', autoClose: 3000 });
+        setIsOtpSent(true);
+        toast.success(result.message || 'OTP sent to your email!', { position: 'top-right', autoClose: 3000 });
       } else {
-        toast.error('Error: ' + result.message, { position: 'top-right', autoClose: 3000 });
+        toast.error(result.message || 'Failed to login', { position: 'top-right', autoClose: 3000 });
       }
     } catch (error) {
       console.error('Error:', error);
@@ -50,24 +63,30 @@ export const Login = () => {
     }
   };
 
-  // Handle OTP verification
+  // **Handle OTP Verification**
   const handleVerifyOtp = async () => {
+    if (!otp) {
+      toast.error('Please enter the OTP!', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3000/verify-otp', {
+      const response = await fetch(`${API_URL}/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, otp }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        toast.success(result.message, { position: 'top-right', autoClose: 3000 });
-        navigate('/navbar');
+        toast.success(result.message || 'OTP verified successfully!', { position: 'top-right', autoClose: 3000 });
+        setTimeout(() => navigate('/navbar'), 1500);
       } else {
-        toast.error('Error: ' + result.message, { position: 'top-right', autoClose: 3000 });
+        toast.error(result.message || 'Invalid OTP', { position: 'top-right', autoClose: 3000 });
       }
     } catch (error) {
       console.error('Error:', error);
@@ -82,9 +101,8 @@ export const Login = () => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        backgroundColor: 'black', // Set background color to black
+        backgroundColor: 'black',
         padding: '2rem',
-        perspective: '1200px', // 3D effect on the container
       }}
     >
       <motion.div
@@ -92,7 +110,8 @@ export const Login = () => {
         animate={{ rotateY: 0 }}
         transition={{ duration: 1.5, type: 'spring', stiffness: 60 }}
         style={{
-          width: '400px',
+          width: '100%',
+          maxWidth: '400px',
           padding: '2rem',
           borderRadius: '10px',
           background: 'white',
@@ -100,11 +119,19 @@ export const Login = () => {
         }}
       >
         <ToastContainer />
-        <Typography variant="h4" align="center" sx={{ marginBottom: '20px', color: 'black' }}>
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{
+            marginBottom: '20px',
+            color: 'black',
+            fontSize: { xs: '1.8rem', sm: '2rem', md: '2.5rem' },
+          }}
+        >
           Login
         </Typography>
 
-        <FormControl sx={{ width: '100%', p: 2 }} onSubmit={handleSubmit}>
+        <FormControl sx={{ width: '100%' }} component="form" onSubmit={handleSubmit}>
           {/* Email Input */}
           <TextField
             InputProps={{
@@ -114,7 +141,6 @@ export const Login = () => {
                 </InputAdornment>
               ),
             }}
-
             label="Email"
             variant="outlined"
             fullWidth
@@ -126,7 +152,6 @@ export const Login = () => {
 
           {/* Password Input */}
           <TextField
-
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -136,7 +161,11 @@ export const Login = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={handleShowPassword}>
-                    {showPassword ? <VisibilityIcon sx={{ color: 'black' }} /> : <VisibilityOffIcon sx={{ color: 'black' }} />}
+                    {showPassword ? (
+                      <VisibilityIcon sx={{ color: 'black' }} />
+                    ) : (
+                      <VisibilityOffIcon sx={{ color: 'black' }} />
+                    )}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -151,9 +180,9 @@ export const Login = () => {
             required
           />
 
-          {/* Submit Button */}
+          {/* Login Button */}
           <Button
-            onClick={handleSubmit}
+            type="submit"
             variant="contained"
             fullWidth
             sx={{
@@ -165,33 +194,36 @@ export const Login = () => {
           >
             Login
           </Button>
-         <Typography
-                    variant="body2"
-                    align="center"
-                    sx={{
-                      marginTop: '10px',
-                      color: 'gray',
-                      fontSize: { xs: '0.8rem', sm: '1rem' },
-                    }}
-                  >
-                    Don't have an account?{' '}
-                    <Button
-                      variant="text"
-                      onClick={() => navigate('/')}
-                      sx={{ color: '#3f51b5', fontSize: 'inherit' }}
-                    >
-                      Register
-                    </Button>
-                  </Typography>
 
-          {/* OTP Input (only visible when OTP is sent) */}
+          <Typography
+            variant="body2"
+            align="center"
+            sx={{
+              marginTop: '10px',
+              color: 'gray',
+              fontSize: { xs: '0.8rem', sm: '1rem' },
+            }}
+          >
+            Don't have an account?{' '}
+            <Button
+              variant="text"
+              onClick={() => navigate('/')}
+              sx={{ color: '#3f51b5', fontSize: 'inherit' }}
+            >
+              Register
+            </Button>
+          </Typography>
+
+          {/* OTP Verification Section */}
           {isOtpSent && (
             <>
               <TextField
                 label="OTP"
+                variant="outlined"
+                fullWidth
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{ mt: 2, mb: 2 }}
                 required
               />
               <Button
